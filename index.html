@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Agenda BTX</title>
+
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#1877F2">
+
+<style>
+:root{
+  --blue:#1877F2; /* azul tipo Meta */
+  --bg:#f5f7fb;
+  --line:#d8e3f5;
+}
+
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  padding:18px;
+  font-family: Arial, sans-serif;
+  background:var(--bg);
+  color:#111;
+}
+
+.wrap{
+  max-width:1100px;
+  margin:0 auto;
+  background:#fff;
+  padding:16px;
+  border-top:4px solid var(--blue);
+  border-left:2px solid var(--blue);
+  border-right:2px solid var(--blue);
+}
+
+h1{
+  margin:6px 0 10px;
+  text-align:center;
+  color:var(--blue);
+  font-weight:900;
+  letter-spacing:.2px;
+}
+
+.controls{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+
+.controls .nav{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+#monthYear{
+  font-weight:900;
+  color:var(--blue);
+  text-transform:capitalize;
+}
+
+button{
+  background:var(--blue);
+  color:#fff;
+  border:none;
+  padding:8px 12px;
+  border-radius:8px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+button:active{ transform: translateY(1px); }
+
+.weekdays{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:6px;
+  margin-bottom:6px;
+}
+
+.weekday{
+  text-align:center;
+  font-size:12px;
+  font-weight:900;
+  color:var(--blue);
+  padding:6px 4px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#fbfdff;
+}
+
+.calendar{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:6px;
+}
+
+.day{
+  border:1px solid var(--line);
+  border-radius:12px;
+  min-height:64px;
+  padding:8px;
+  background:#fff;
+  cursor:pointer;
+  position:relative;
+}
+
+.day.empty{
+  background:transparent;
+  border:none;
+  cursor:default;
+}
+
+.day-number{
+  font-weight:900;
+  color:var(--blue);
+  font-size:13px;
+}
+
+.day.selected{
+  outline:2px solid var(--blue);
+  outline-offset:2px;
+}
+
+.dot{
+  position:absolute;
+  right:10px;
+  top:10px;
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:var(--blue);
+  opacity:.9;
+  display:none;
+}
+.day.has-note .dot{ display:block; }
+
+.panel-wrap{
+  margin-top:12px;
+  display:grid;
+  grid-template-columns: 1.25fr .75fr;
+  gap:12px;
+}
+
+.panel{
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px;
+  background:#fbfdff;
+}
+
+.panel-title{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+.panel-title strong{
+  color:var(--blue);
+  font-size:14px;
+}
+
+.badge{
+  font-size:12px;
+  font-weight:900;
+  padding:4px 10px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:#fff;
+  color:#333;
+  white-space:nowrap;
+}
+
+textarea{
+  width:100%;
+  min-height:180px;
+  resize:vertical;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:12px;
+  font-size:14px;
+  outline:none;
+  background:#fff;
+}
+
+textarea:focus{ border-color:var(--blue); }
+
+.small{
+  margin-top:8px;
+  font-size:12px;
+  color:#333;
+}
+
+.attach-row{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+input[type="file"]{
+  border:1px dashed var(--line);
+  padding:10px;
+  border-radius:12px;
+  background:#fff;
+}
+
+.attach-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.secondary{
+  background:#fff;
+  color:var(--blue);
+  border:1px solid var(--blue);
+}
+
+.preview{
+  margin-top:10px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.preview-card{
+  border:1px solid var(--line);
+  background:#fff;
+  border-radius:14px;
+  padding:10px;
+}
+
+.preview-card .name{
+  font-size:12px;
+  font-weight:900;
+  margin-bottom:6px;
+}
+
+.preview-img{
+  max-width:150px; /* pequeno */
+  max-height:110px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  display:block;
+}
+
+/* rodapé padrão (tela) */
+.footer{
+  position:fixed;
+  right:10px;
+  bottom:6px;
+  font-size:12px;
+  color:#222;
+  text-align:right;
+  background:rgba(255,255,255,.88);
+  padding:6px 8px;
+  border-radius:12px;
+  border:1px solid var(--line);
+}
+
+@media (max-width: 900px){
+  .panel-wrap{ grid-template-columns:1fr; }
+}
+
+/* ===== Impressão/PDF (mantém calendário) e corrige margem inferior ===== */
+@page { size: A4; margin: 14mm; }
+
+@media print{
+  button, input[type="file"], .secondary{ display:none !important; }
+
+  body{ padding:0 !important; background:#fff !important; }
+
+  .wrap{
+    padding:14px !important;
+    padding-bottom:22mm !important; /* reserva fundo pra não cortar */
+  }
+
+  .calendar, .panel-wrap, .weekdays{
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* rodapé NÃO fixo no print (evita corte no Android) */
+  .footer{
+    position:static !important;
+    display:block !important;
+    margin-top:10mm !important;
+    border:1px solid #ddd !important;
+    background:#fff !important;
+    text-align:right !important;
+  }
+
+  textarea{ border:1px solid #ddd !important; }
+}
+</style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1>Agenda BTX</h1>
+
+    <div class="controls">
+      <div class="nav">
+        <button id="prevBtn" type="button">◀</button>
+        <div id="monthYear"></div>
+        <button id="nextBtn" type="button">▶</button>
+      </div>
+      <button id="printBtn" type="button">Imprimir</button>
+    </div>
+
+    <div class="weekdays">
+      <div class="weekday">Dom</div><div class="weekday">Seg</div><div class="weekday">Ter</div>
+      <div class="weekday">Qua</div><div class="weekday">Qui</div><div class="weekday">Sex</div><div class="weekday">Sáb</div>
+    </div>
+
+    <div class="calendar" id="calendar"></div>
+
+    <div class="panel-wrap">
+      <div class="panel">
+        <div class="panel-title">
+          <strong>Bloco de notas</strong>
+          <span class="badge" id="selectedLabel">Selecione um dia</span>
+        </div>
+        <textarea id="dayNote" placeholder="Escreva aqui..."></textarea>
+        <div class="small">Memória offline forte (IndexedDB). Salva automaticamente.</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">
+          <strong>Anexos</strong>
+          <span class="badge">1 caixa</span>
+        </div>
+
+        <div class="attach-row">
+          <input id="fileInput" type="file" accept="image/*,.pdf,.doc,.docx,.txt" />
+          <div class="attach-actions">
+            <button id="addAttachBtn" type="button">Adicionar</button>
+            <button id="clearAttachBtn" class="secondary" type="button">Limpar</button>
+          </div>
+          <div class="small">Imagem salva e aparece pequena. Outros arquivos ficam registrados por nome.</div>
+        </div>
+
+        <div id="attachments" class="preview"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Desenvolvido por BTX TECH<br>
+    Telefone 999873835
+  </div>
+
+<script>
+/* ===================== PWA (service worker) ===================== */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
+  });
+}
+
+/* ===================== IndexedDB (memória forte) ===================== */
+const DB_NAME = "btx_agenda";
+const DB_VERSION = 1;
+const STORE_NOTES = "notes";
+const STORE_ATTACH = "attachments";
+const STORE_META = "meta";
+
+function openDB(){
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(STORE_NOTES)) {
+        db.createObjectStore(STORE_NOTES, { keyPath: "key" }); // key = YYYY-MM-DD
+      }
+      if (!db.objectStoreNames.contains(STORE_ATTACH)) {
+        db.createObjectStore(STORE_ATTACH, { keyPath: "key" }); // key = YYYY-MM
+      }
+      if (!db.objectStoreNames.contains(STORE_META)) {
+        db.createObjectStore(STORE_META, { keyPath: "key" });
+      }
+    };
+
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function dbPut(store, value){
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, "readwrite");
+    tx.objectStore(store).put(value);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function dbGet(store, key){
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, "readonly");
+    const req = tx.objectStore(store).get(key);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function dbDelete(store, key){
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, "readwrite");
+    tx.objectStore(store).delete(key);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+/* ===================== App lógica ===================== */
+let date = new Date();
+let selectedDay = null;
+
+const elCalendar = document.getElementById("calendar");
+const elMonthYear = document.getElementById("monthYear");
+const elSelectedLabel = document.getElementById("selectedLabel");
+const elDayNote = document.getElementById("dayNote");
+const elAttachments = document.getElementById("attachments");
+
+document.getElementById("prevBtn").onclick = () => prevMonth();
+document.getElementById("nextBtn").onclick = () => nextMonth();
+document.getElementById("printBtn").onclick = () => window.print();
+document.getElementById("addAttachBtn").onclick = () => addAttachment();
+document.getElementById("clearAttachBtn").onclick = () => clearAttachments();
+
+function pad2(n){ return String(n).padStart(2,"0"); }
+function noteKey(day){
+  return `${date.getFullYear()}-${pad2(date.getMonth()+1)}-${pad2(day)}`; // YYYY-MM-DD
+}
+function attachKey(){
+  return `${date.getFullYear()}-${pad2(date.getMonth()+1)}`; // YYYY-MM
+}
+
+function setLabel(){
+  if(!selectedDay){
+    elSelectedLabel.textContent = "Selecione um dia";
+    return;
+  }
+  const m = date.toLocaleString("pt-br",{month:"long"});
+  elSelectedLabel.textContent = `${selectedDay} de ${m} de ${date.getFullYear()}`;
+}
+
+async function renderCalendar(){
+  elCalendar.innerHTML = "";
+  elMonthYear.textContent = date.toLocaleString("pt-br",{month:"long"}) + " " + date.getFullYear();
+
+  const month = date.getMonth();
+  const year = date.getFullYear();
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+
+  for(let i=0;i<firstDay;i++){
+    const empty = document.createElement("div");
+    empty.className = "day empty";
+    elCalendar.appendChild(empty);
+  }
+
+  // Para pontinhos sem travar: checa notas do mês (store por chave)
+  // Estratégia simples: ao renderizar, tenta buscar nota do dia individualmente (leve em mês pequeno)
+  for(let day=1; day<=daysInMonth; day++){
+    const div = document.createElement("div");
+    div.className = "day";
+    div.onclick = () => selectDay(day);
+
+    const key = noteKey(day);
+    const rec = await dbGet(STORE_NOTES, key);
+    const has = rec && (rec.text || "").trim().length > 0;
+    if(has) div.classList.add("has-note");
+    if(selectedDay === day) div.classList.add("selected");
+
+    div.innerHTML = `<div class="day-number">${day}</div><div class="dot"></div>`;
+    elCalendar.appendChild(div);
+  }
+
+  // se dia selecionado não existe mais
+  if(selectedDay && selectedDay > daysInMonth){
+    selectedDay = null;
+    elDayNote.value = "";
+  }
+
+  setLabel();
+  await renderAttachments();
+}
+
+async function selectDay(day){
+  selectedDay = day;
+  setLabel();
+  const rec = await dbGet(STORE_NOTES, noteKey(day));
+  elDayNote.value = rec ? (rec.text || "") : "";
+  await dbPut(STORE_META, { key:"lastSelected", value: { y: date.getFullYear(), m: date.getMonth(), d: selectedDay } });
+  await renderCalendar();
+}
+
+// autosave (debounce)
+let saveTimer = null;
+elDayNote.addEventListener("input", () => {
+  if(!selectedDay) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    await dbPut(STORE_NOTES, { key: noteKey(selectedDay), text: elDayNote.value, updatedAt: Date.now() });
+    // atualiza pontinho
+    await renderCalendar();
+  }, 250);
+});
+
+function prevMonth(){
+  date.setMonth(date.getMonth()-1);
+  selectedDay = null;
+  elDayNote.value = "";
+  renderCalendar();
+}
+
+function nextMonth(){
+  date.setMonth(date.getMonth()+1);
+  selectedDay = null;
+  elDayNote.value = "";
+  renderCalendar();
+}
+
+/* ===================== Anexos (1 caixa por mês) ===================== */
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, s => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[s]));
+}
+
+async function getAttachList(){
+  const rec = await dbGet(STORE_ATTACH, attachKey());
+  return rec ? (rec.items || []) : [];
+}
+
+async function setAttachList(items){
+  await dbPut(STORE_ATTACH, { key: attachKey(), items, updatedAt: Date.now() });
+}
+
+async function addAttachment(){
+  const input = document.getElementById("fileInput");
+  const file = input.files && input.files[0];
+  if(!file) return;
+
+  const list = await getAttachList();
+
+  if(file.type.startsWith("image/")){
+    const reader = new FileReader();
+    reader.onload = async () => {
+      list.unshift({ name:file.name, type:file.type, data: reader.result });
+      await setAttachList(list);
+      input.value = "";
+      await renderAttachments();
+    };
+    reader.readAsDataURL(file);
+  } else {
+    // outros: registra nome
+    list.unshift({ name:file.name, type:file.type || "arquivo", data:null });
+    await setAttachList(list);
+    input.value = "";
+    await renderAttachments();
+  }
+}
+
+async function clearAttachments(){
+  await dbDelete(STORE_ATTACH, attachKey());
+  await renderAttachments();
+}
+
+async function renderAttachments(){
+  const list = await getAttachList();
+  elAttachments.innerHTML = "";
+
+  if(list.length === 0){
+    elAttachments.innerHTML = `<div class="small">Sem anexos neste mês.</div>`;
+    return;
+  }
+
+  list.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "preview-card";
+
+    if(item.data && String(item.type).startsWith("image/")){
+      card.innerHTML = `
+        <div class="name">${escapeHtml(item.name)}</div>
+        <img class="preview-img" src="${item.data}" alt="${escapeHtml(item.name)}">
+      `;
+    } else {
+      card.innerHTML = `
+        <div class="name">${escapeHtml(item.name)}</div>
+        <div class="small">Arquivo registrado (nome).</div>
+      `;
+    }
+
+    elAttachments.appendChild(card);
+  });
+}
+
+/* ===================== Restore do último ponto ===================== */
+(async function init(){
+  const meta = await dbGet(STORE_META, "lastSelected");
+  if(meta && meta.value){
+    const { y, m, d } = meta.value;
+    date = new Date(y, m, 1);
+    selectedDay = d || null;
+  }
+  await renderCalendar();
+
+  // se tinha dia salvo, carrega a nota
+  if(selectedDay){
+    const rec = await dbGet(STORE_NOTES, noteKey(selectedDay));
+    elDayNote.value = rec ? (rec.text || "") : "";
+    setLabel();
+  }
+})();
+</script>
+</body>
+</html>
